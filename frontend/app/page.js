@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { CONTRACT_ADDRESS, CONTRACT_ABI } from "@/utils/contract";
-import { Trash2, CheckCircle, Circle, RefreshCw, Wallet } from "lucide-react";
+import { Trash2, Check, Wallet, Plus, Loader2 } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -17,16 +17,18 @@ export default function Home() {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [contract, setContract] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(false);
 
     // Connect Wallet
     const connectWallet = async () => {
         if (window.ethereum) {
+            setIsConnecting(true);
             try {
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const signer = await provider.getSigner();
                 const address = await signer.getAddress();
 
-                // Check Network
+                // Check Network (Sepolia)
                 const network = await provider.getNetwork();
                 if (network.chainId !== 11155111n) {
                     try {
@@ -35,17 +37,18 @@ export default function Home() {
                             params: [{ chainId: "0xaa36a7" }],
                         });
                     } catch (switchError) {
-                        // This error code indicates that the chain has not been added to MetaMask.
                         if (switchError.code === 4902) {
                             alert("Please add Sepolia network to MetaMask");
                         } else {
                             alert("Please switch to Sepolia network");
                         }
+                        setIsConnecting(false);
                         return;
                     }
                 }
 
                 setAccount(address);
+                localStorage.setItem("connectedWith", "metamask");
 
                 const todoContract = new ethers.Contract(
                     CONTRACT_ADDRESS,
@@ -56,11 +59,23 @@ export default function Home() {
             } catch (error) {
                 console.error("Connection failed", error);
                 alert("Failed to connect wallet.");
+            } finally {
+                setIsConnecting(false);
             }
         } else {
             alert("Please install MetaMask!");
         }
     };
+
+    // Auto Connect
+    useEffect(() => {
+        const checkConnection = async () => {
+            if (localStorage.getItem("connectedWith") === "metamask") {
+                await connectWallet();
+            }
+        };
+        checkConnection();
+    }, []);
 
     // Fetch Todos
     const fetchTodos = async () => {
@@ -68,7 +83,6 @@ export default function Home() {
             setLoading(true);
             try {
                 const data = await contract.getTodos();
-                // data is a Struct, need to format it
                 const formattedTodos = data.map((todo) => ({
                     id: Number(todo.id),
                     text: todo.text,
@@ -99,8 +113,12 @@ export default function Home() {
             setInput("");
             await fetchTodos();
         } catch (error) {
+            if (error.code === 4001 || error.code === "ACTION_REJECTED") {
+                console.warn("Transaction rejected by user");
+                return;
+            }
             console.error("Error adding todo", error);
-            alert("Transaction failed");
+            alert("Failed to add todo. See console for details.");
         } finally {
             setLoading(false);
         }
@@ -115,7 +133,12 @@ export default function Home() {
             await tx.wait();
             await fetchTodos();
         } catch (error) {
+            if (error.code === 4001 || error.code === "ACTION_REJECTED") {
+                console.warn("Transaction rejected by user");
+                return;
+            }
             console.error("Error toggling todo", error);
+            alert("Failed to toggle todo. See console for details.");
         } finally {
             setLoading(false);
         }
@@ -131,106 +154,184 @@ export default function Home() {
             await tx.wait();
             await fetchTodos();
         } catch (error) {
+            if (error.code === 4001 || error.code === "ACTION_REJECTED") {
+                console.warn("Transaction rejected by user");
+                return;
+            }
             console.error("Error deleting todo", error);
+            alert("Failed to delete todo. See console for details.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <main className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center py-10 px-4">
-            <div className="w-full max-w-md">
+        <main className="min-h-screen flex flex-col items-center justify-center p-6 font-sans selection:bg-blue-500/30">
 
-                {/* Header */}
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                        OnChain Todo
-                    </h1>
-                    {!account ? (
-                        <button
-                            onClick={connectWallet}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-full font-medium transition-all"
-                        >
-                            <Wallet size={18} /> Connect
-                        </button>
-                    ) : (
-                        <div className="bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-400 border border-gray-700">
-                            {account.slice(0, 6)}...{account.slice(-4)}
+            {/* Main Container - Glassmorphism */}
+            <div className="w-full max-w-[800px] bg-black/40 backdrop-blur-2xl border border-white/5 rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.05)] overflow-hidden relative">
+
+                {/* Glow Effects */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-50 blur-sm"></div>
+                <div className="absolute -top-32 -right-32 w-64 h-64 bg-purple-500/20 rounded-full blur-[100px] pointer-events-none"></div>
+                <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+                <div className="relative z-10 p-8 sm:p-12">
+
+                    {/* Header */}
+                    <header className="flex justify-between items-center mb-16">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <Check size={18} className="text-white stroke-[3]" />
+                            </div>
+                            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+                                OnChain<span className="text-gray-400 font-light">Todo</span>
+                            </h1>
                         </div>
-                    )}
-                </div>
 
-                {/* Input */}
-                {account && (
-                    <div className="flex gap-2 mb-8">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="What needs to be done?"
-                            className="flex-1 bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-                            onKeyDown={(e) => e.key === "Enter" && addTodo()}
-                        />
-                        <button
-                            onClick={addTodo}
-                            disabled={loading || !input.trim()}
-                            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 rounded-xl font-medium transition-all"
-                        >
-                            {loading ? <RefreshCw className="animate-spin" /> : "Add"}
-                        </button>
+                        {!account ? (
+                            <button
+                                onClick={connectWallet}
+                                disabled={isConnecting}
+                                className="group relative px-6 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:border-blue-500/30 active:scale-95 overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="flex items-center gap-2 relative z-10">
+                                    {isConnecting ? (
+                                        <Loader2 size={16} className="animate-spin text-blue-400" />
+                                    ) : (
+                                        <Wallet size={16} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
+                                    )}
+                                    <span className="text-sm font-medium text-blue-100 group-hover:text-white transition-colors">
+                                        {isConnecting ? "Connecting..." : "Connect Wallet"}
+                                    </span>
+                                </div>
+                            </button>
+                        ) : (
+                            <div className="flex items-center gap-3 px-4 py-2 bg-black/40 rounded-full border border-white/5 backdrop-blur-md">
+                                <div className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                                </div>
+                                <span className="text-xs font-mono text-gray-400 tracking-wide">
+                                    {account.slice(0, 6)}...{account.slice(-4)}
+                                </span>
+                            </div>
+                        )}
+                    </header>
+
+                    {/* Hero / Input Section */}
+                    <div className="mb-14">
+                        {account ? (
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
+                                <div className="relative flex items-center bg-[#0a0a0a] border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl focus-within:border-blue-500/50 focus-within:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300">
+                                    <input
+                                        type="text"
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        placeholder="Create a new task..."
+                                        className="flex-1 bg-transparent text-white placeholder-gray-500 pl-6 pr-4 py-4 text-lg focus:outline-none"
+                                        style={{ color: 'white' }}
+                                        onKeyDown={(e) => e.key === "Enter" && addTodo()}
+                                    />
+                                    <button
+                                        onClick={addTodo}
+                                        disabled={loading || !input.trim()}
+                                        className="p-4 rounded-lg bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 disabled:hover:bg-blue-600 transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95"
+                                    >
+                                        {loading ? (
+                                            <Loader2 size={20} className="animate-spin" />
+                                        ) : (
+                                            <Plus size={20} strokeWidth={2.5} />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 px-6 rounded-2xl bg-white/5 border border-dashed border-white/10">
+                                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-gray-800 to-black flex items-center justify-center border border-white/5 shadow-inner">
+                                    <Wallet size={32} className="text-gray-600" />
+                                </div>
+                                <h3 className="text-xl font-medium text-white mb-2">Connect to Start</h3>
+                                <p className="text-gray-400 text-sm max-w-xs mx-auto leading-relaxed">
+                                    Connect your wallet to manage your decentralized tasks securely on the blockchain.
+                                </p>
+                            </div>
+                        )}
                     </div>
-                )}
 
-                {/* List */}
-                <div className="space-y-3">
-                    {account ? (
-                        todos.length > 0 ? (
+                    {/* Task List */}
+                    <div className="space-y-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                        {account && todos.length > 0 ? (
                             todos.map((todo) => (
                                 <div
                                     key={todo.id}
-                                    className="group bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center justify-between hover:border-gray-700 transition-all"
+                                    className="group relative bg-[#111] hover:bg-[#1a1a1a] border border-white/5 rounded-2xl p-6 flex items-center gap-6 transition-all duration-300 hover:border-white/10 hover:shadow-lg hover:-translate-y-0.5"
                                 >
-                                    <div className="flex items-center gap-3">
-                                        <button
-                                            onClick={() => toggleTodo(todo.id)}
-                                            disabled={loading}
-                                            className={cn(
-                                                "text-gray-500 hover:text-blue-400 transition-colors",
-                                                todo.completed && "text-green-500 hover:text-green-400"
-                                            )}
-                                        >
-                                            {todo.completed ? <CheckCircle /> : <Circle />}
-                                        </button>
-                                        <span
-                                            className={cn(
-                                                "text-lg",
-                                                todo.completed && "line-through text-gray-500"
-                                            )}
-                                        >
-                                            {todo.text}
-                                        </span>
-                                    </div>
+                                    <button
+                                        onClick={() => toggleTodo(todo.id)}
+                                        disabled={loading}
+                                        className={cn(
+                                            "flex-shrink-0 w-6 h-6 rounded-full border flex items-center justify-center transition-all duration-300",
+                                            todo.completed
+                                                ? "bg-blue-600 border-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.4)]"
+                                                : "border-gray-600 text-transparent hover:border-blue-500"
+                                        )}
+                                    >
+                                        <Check size={14} strokeWidth={3} className={cn("transition-transform", todo.completed ? "scale-100" : "scale-0")} />
+                                    </button>
+
+                                    <span
+                                        className={cn(
+                                            "flex-1 text-base leading-none transition-all duration-300",
+                                            todo.completed ? "text-gray-500 line-through decoration-gray-700" : "text-gray-200"
+                                        )}
+                                    >
+                                        {todo.text}
+                                    </span>
+
                                     <button
                                         onClick={() => deleteTodo(todo.id)}
                                         disabled={loading}
-                                        className="text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="p-2 text-gray-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
                                     >
-                                        <Trash2 size={20} />
+                                        <Trash2 size={18} />
                                     </button>
                                 </div>
                             ))
-                        ) : (
-                            <div className="text-center text-gray-500 py-10">
-                                No todos found. Add one to get started!
+                        ) : account ? (
+                            <div className="text-center py-10">
+                                <p className="text-gray-500 text-sm">No tasks found. Add one above! ✨</p>
                             </div>
-                        )
-                    ) : (
-                        <div className="text-center text-gray-500 py-10 bg-gray-900/50 rounded-xl border border-gray-800 border-dashed">
-                            Please connect your wallet to view your todos.
-                        </div>
-                    )}
+                        ) : null}
+                    </div>
+
                 </div>
             </div>
+
+            {/* Footer */}
+            <footer className="mt-12 text-center">
+                <p className="font-mono text-[10px] text-gray-500 tracking-[0.2em] opacity-60">
+                    POWERED BY SEPOLIA TESTNET
+                </p>
+            </footer>
+
+            <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #333;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #444;
+        }
+      `}</style>
         </main>
     );
 }

@@ -35,3 +35,9 @@ A simple decentralized Todo application built on Ethereum.
    ```bash
    npx hardhat run scripts/deploy.js --network sepolia
    ```
+
+4. Run Frontend:
+   ```bash
+   cd frontend
+   npm run dev
+   ```

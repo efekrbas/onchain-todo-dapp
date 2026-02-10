@@ -1,43 +1,94 @@
-# On-Chain Todo dApp
+# On-Chain Todo dApp 📝
 
-A simple decentralized Todo application built on Ethereum.
+A decentralized Todo application built on the Ethereum blockchain (Sepolia Testnet). Users can add, toggle, and delete todos, with all data stored securely on-chain.
 
-## Features
+## 🚀 Features
 
-- Create, toggle, and delete todos
-- Each wallet manages its own todo list
-- Deployed on Sepolia Testnet
+-   **Decentralized Storage:** Todos are stored on the Ethereum blockchain.
+-   **User Ownership:** Each user has their own private list of todos.
+-   **Wallet Connection:** Secure login with MetaMask.
+-   **Real-time Updates:** Instant UI reflection of blockchain transactions.
+-   **Network Awareness:** Automatically prompts to switch to Sepolia Testnet.
+-   **Persistence:** Remembers your wallet connection across sessions.
 
-## Deployed Contract
+## 🛠 Tech Stack
 
-- **Network:** Sepolia Testnet
-- **Address:** `0x1a20C5af7342f0e79B142fd65f9eB10e32120829`
+-   **Smart Contract:** Solidity (v0.8.28)
+-   **Blockchain Framework:** Hardhat
+-   **Frontend:** Next.js (App Router), React
+-   **Styling:** Tailwind CSS, Lucide React
+-   **Interaction:** Ethers.js v6
 
-## Project Structure
+## 📦 Installation
 
-- `contracts/` - Solidity smart contracts
-- `scripts/` - Deployment scripts
-- `test/` - Hardhat unit tests
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/your-username/onchain-todo-dapp.git
+    cd onchain-todo-dapp
+    ```
 
-## Getting Started
+2.  **Install dependencies (Root):**
+    ```bash
+    npm install
+    ```
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
+3.  **Install dependencies (Frontend):**
+    ```bash
+    cd frontend
+    npm install
+    ```
 
-2. Run tests:
-   ```bash
-   npx hardhat test
-   ```
+4.  **Environment Setup:**
+    Create a `.env` file in the root directory:
+    ```env
+    SEPOLIA_URL=https://sepolia.infura.io/v3/YOUR_INFURA_KEY
+    PRIVATE_KEY=YOUR_WALLET_PRIVATE_KEY
+    ```
 
-3. Deploy (requires .env configuration):
-   ```bash
-   npx hardhat run scripts/deploy.js --network sepolia
-   ```
+## 🧪 Running Tests
 
-4. Run Frontend:
-   ```bash
-   cd frontend
-   npm run dev
-   ```
+Run the Hardhat unit tests to verify smart contract logic:
+
+```bash
+npx hardhat test
+```
+
+### Test Screenshots
+*(Add your test screenshots here)*
+![Test Results](https://via.placeholder.com/600x400?text=Run+npx+hardhat+test+screenshot)
+
+## 🌍 Deployment
+
+To deploy the smart contract to the Sepolia Testnet:
+
+```bash
+npx hardhat run scripts/deploy.js --network sepolia
+```
+
+After deployment, update the `CONTRACT_ADDRESS` in `frontend/utils/contract.js`.
+
+## 🖥 Running the Frontend
+
+1.  Navigate to the frontend directory:
+    ```bash
+    cd frontend
+    ```
+
+2.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+
+3.  Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🔗 Live Demo
+
+[Live Demo Link (Coming Soon)](https://example.com)
+
+## 🎥 Demo Video
+
+[Watch the Demo Video (Coming Soon)](https://youtube.com)
+
+---
+
+**Note:** This dApp runs on the **Sepolia Testnet**. You will need Sepolia ETH to interact with it. Get free testnet ETH from a [Sepolia Faucet](https://sepoliafaucet.com/).

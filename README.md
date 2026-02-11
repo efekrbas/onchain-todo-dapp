@@ -82,7 +82,7 @@ After deployment, update the `CONTRACT_ADDRESS` in `frontend/utils/contract.js`.
 
 ## 🔗 Live Demo
 
-[Live Demo Link (Coming Soon)](https://example.com)
+[Live Demo Link](onchain-todo-dapp.vercel.app)
 
 ## 🎥 Demo Video
 

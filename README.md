@@ -86,7 +86,9 @@ After deployment, update the `CONTRACT_ADDRESS` in `frontend/utils/contract.js`.
 
 ## 🎥 Demo Video
 
-[Watch the Demo Video](video.mov)
+https://github.com/user-attachments/assets/98840d16-9296-4628-a24b-bdd89d915444
+
+
 
 ---
 

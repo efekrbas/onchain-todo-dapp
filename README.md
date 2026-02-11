@@ -54,8 +54,7 @@ npx hardhat test
 ```
 
 ### Test Screenshots
-*(Add your test screenshots here)*
-![Test Results](https://via.placeholder.com/600x400?text=Run+npx+hardhat+test+screenshot)
+![Test Results](screenshot.png)
 
 ## 🌍 Deployment
 
@@ -87,7 +86,7 @@ After deployment, update the `CONTRACT_ADDRESS` in `frontend/utils/contract.js`.
 
 ## 🎥 Demo Video
 
-[Watch the Demo Video (Coming Soon)](https://youtube.com)
+[Watch the Demo Video](video.mov)
 
 ---
 

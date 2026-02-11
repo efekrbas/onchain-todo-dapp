@@ -53,7 +53,7 @@ Run the Hardhat unit tests to verify smart contract logic:
 npx hardhat test
 ```
 
-### Test Screenshots
+### Test Screenshot
 ![Test Results](screenshot.png)
 
 ## 🌍 Deployment
